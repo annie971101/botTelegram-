@@ -79,10 +79,6 @@ while(True):
 				texto_respuesta = "Hasta pronto!"
 			elif "Adios" in texto:
 				texto_respuesta = "Hasta pronto!"
-			elif "Te amo" in texto:
-				texto_respuesta = "Te amo "+nombre+"!"
-			elif "Coco" in texto:
-				texto_respuesta = "Coco es el amor de tu vida "+nombre+"?"
 			elif "Si" in texto:
 				texto_respuesta = ":D"
 			elif "Me das un vaso?" in texto:
