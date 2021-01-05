@@ -1,12 +1,35 @@
 #Importar librerias
 import json
 import requests
- 
+import screen
+import pymongo
+
+
 #Variables para el Token y la URL del chatbot
-TOKEN = "1324626471:AAF67szqKsNrILL22cgT0RjujZRf3R4_AMc" #Cambialo por tu token
+TOKEN = "" 
 URL = "https://api.telegram.org/bot" + TOKEN + "/"
  
  
+# conexiÃ³n a Mongo
+def conexion():
+	client = pymongo.MongoClient('127.0.0.1',27017)
+	client.server_info()  
+	return client 
+	
+#almacenar los datos a mongodb
+def almacena(nombre,texto):
+	client = conexion()
+	data = {}
+	data['Nombre'] = nombre
+	data['Mensaje'] = texto
+	try:
+		destination = 'chat'
+		database = 'ChatBot'
+		collection = client[database][destination]
+		collection.insert_one(data)
+	except Exception as error:
+		print("Error guardando los datos: %s" % str(error))
+	client.close()
  
 def update(offset):
 	#Llamar al metodo getUpdates del bot, utilizando un offset
@@ -30,12 +53,10 @@ def info_mensaje(mensaje):
 	elif "sticker" in mensaje["message"]:
 		tipo = "sticker"
 	elif "animation" in mensaje["message"]:
-		tipo = "animacion" #Nota: los GIF cuentan como animaciones
+		tipo = "animacion" 
 	elif "photo" in mensaje["message"]:
 		tipo = "foto"
 	else:
-		# Para no hacer mas largo este ejemplo, el resto de tipos entran
-		# en la categoria "otro"
 		tipo = "otro"
  
 	#Recoger la info del mensaje (remitente, id del chat e id del mensaje)
@@ -48,7 +69,7 @@ def info_mensaje(mensaje):
  
 def leer_mensaje(mensaje):
  
-	#Extraer el texto, nombre de la persona e id del último mensaje recibido
+	#Extraer el texto, nombre de la persona e id del Ãºltimo mensaje recibido
 	texto = mensaje["message"]["text"]
  
 	#Devolver las dos id, el nombre y el texto del mensaje
@@ -73,31 +94,58 @@ while(True):
 		#Generar una respuesta dependiendo del tipo de mensaje
 		if tipo == "texto":
 			texto = leer_mensaje(i)
-			if "Hola" in texto:
-				texto_respuesta = "Hola, "+nombre+"!"
-			elif "Adiós" in texto:
-				texto_respuesta = "Hasta pronto!"
-			elif "Adios" in texto:
-				texto_respuesta = "Hasta pronto!"
-			elif "Si" in texto:
-				texto_respuesta = ":D"
-			elif "Me das un vaso?" in texto:
-				texto_respuesta = "Si, porque no "+nombre
-			elif "Si" in texto:
-				texto_respuesta = ":D"
-			elif "No" in texto:
-				texto_respuesta = ":c "
-			else: 
-				texto_respuesta = "Has escrito " + texto 
-		elif tipo == "sticker":
-			texto_respuesta = "Bonito sticker!"
-		elif tipo == "animacion":
-			texto_respuesta = "Me gusta este GIF!"
-		elif tipo == "foto":
-			texto_respuesta = "Bonita foto!"
-		elif tipo == "otro":
-			texto_respuesta = "Es otro tipo de mensaje"
- 
+			texto = texto.lower()
+			
+			if "/start" in texto or "hola" in texto.lower():
+				texto_respuesta = "Hola soy el bot asistente para caja negra,  en que te puedo ayudar. \nPuedes consultar: \n\n* Servidores - Tipos de servidores que manejamos.\n* Hosting - Planes de hosting con los que contamos. \n* Contratar - Contratar algÃºn servicio. \n\nPara elegir una de las opciones anteriores por favor envia la palabra relacionada con el servicio que desea consultar."
+
+			elif "gracias" in texto:
+				texto_respuesta = "Estamos para servirte :D!"
+
+			elif "adios" in texto or "adiÃ³s" in texto:
+				texto_respuesta = "Hasta pronto :D!"
+
+			elif "contratar" in texto or "contrataciÃ³n" in texto or "contratacion" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "Puedes ingresar los datos con la palabra contrato seguido de tu nombre, nÃºmero de telefono, correo y el servicio a contratar, en caso de ser un servicio presencial especifique la direcciÃ³n. \nEjemplo: \nContrato Alexa Luna Lira 4270000000 ejemplo_1@gmail.com servidor gps av.de los patos nÃ¹mero 2"
+
+			elif "contrato" in texto:
+				#"enviar_mensaje(1387340486, texto)"
+				almacena(nombre,texto)
+				texto_respuesta = "Tus datos fueron enviados a uno de nuestros asesores, en un momento nos contactaremos contigo, fue un placer servirle :D"
+
+
+			elif "linux" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "La informaciÃ³n la puede encontrar en el siguiente link: https://caja-negra.com.mx/planes-vps-gl/"
+
+			elif "windows" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "La informaciÃ³n la puede encontrar en el siguiente link: https://caja-negra.com.mx/planes-vps-ws/"
+
+
+			elif "servidor" in texto or "servidores" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "Contamos con servidores virtuales privados windows o linux, elija una de las siguientes opciones \n* Windows \n*Linux"
+
+			elif "estudiantes" in texto or "estudiante" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "OK, los planes para estudiantes los puede consultar en el siguiente link: https://caja-negra.com.mx/planes-hosting-estudiante/  si desea contratar un plan, porfavor ingrese sus datos"
+
+			elif "empresarial" in texto or "empresa" in texto or "empresas" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "El costo esta en el siguiente link: https://caja-negra.com.mx/planes-hosting/"
+
+
+			elif "hosting" in texto:
+				almacena(nombre,texto)
+				texto_respuesta = "Contamos con diversos planes de hosting, elige la opcion que mas te convenga: \n* Estudiantes \n* Empresarial"
+
+
+			else:
+				almacena(nombre,texto)
+				texto_respuesta = "no encuentro respuesta a tu pregunta lo siento :("
+				
 		#Si la ID del mensaje es mayor que el ultimo, se guarda la ID + 1
 		if id_update > (ultima_id-1):
 			ultima_id = id_update + 1
